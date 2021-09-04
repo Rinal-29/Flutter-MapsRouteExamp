@@ -92,7 +92,7 @@ class _HomePageState extends State<HomePage> {
       centerTitle: true,
       backgroundColor: Colors.transparent,
       title: Text(
-        'Lokasi Sarana Olahraga',
+        'Pemetaan Sarana Olahraga',
         style: TextStyle(
           fontWeight: FontWeight.w600,
           color: Colors.black54,

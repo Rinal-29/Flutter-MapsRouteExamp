@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:fmaps_route/entity/sports_location.dart';
+import 'package:fmaps_route/utils.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -34,6 +36,10 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
 
   Set<Marker> markers = {};
   Set<Polyline> polylines = {};
+
+  List<LatLng> polylineCoordinates1 = [];
+
+  PolylinePoints polylinePoints;
 
   String placeDistance;
 
@@ -110,7 +116,7 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
         markerId: MarkerId(startAddress),
         position: LatLng(startLatitude, startLongitude),
         infoWindow: InfoWindow(
-          title: '$startLatitude, $startLongitude',
+          title: 'Start $startLatitude, $startLongitude',
           snippet: startAddress,
         ),
         icon: BitmapDescriptor.defaultMarker,
@@ -120,28 +126,18 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
         markerId: MarkerId(sportLocation.id),
         position: LatLng(destinationLatitude, destinationLongitude),
         infoWindow: InfoWindow(
-          title: sportLocation.name,
+          title: 'Destination ${sportLocation.name}',
           snippet: sportLocation.address,
         ),
         icon:
             BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueMagenta),
       );
 
-      List<LatLng> listCoordinates = [];
-      LatLng startCoordinatePoly = LatLng(startLatitude, startLongitude);
-      LatLng destinationCoordinatePoly =
-          LatLng(destinationLatitude, destinationLongitude);
+      markers.add(startMarker);
+      markers.add(destinationMarker);
 
-      listCoordinates.add(startCoordinatePoly);
-      listCoordinates.add(destinationCoordinatePoly);
-
-      Polyline poly = Polyline(
-        polylineId: PolylineId('poly'),
-        points: listCoordinates,
-        width: 4,
-        visible: true,
-        color: Colors.red,
-      );
+      await _createPolylines(startLatitude, startLongitude, destinationLatitude,
+          destinationLongitude, TravelMode.transit);
 
       double totalDistance = 0.0;
 
@@ -154,23 +150,15 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
         return 12742 * asin(sqrt(a));
       }
 
-      for (var i = 0; i < listCoordinates.length - 1; i++) {
+      for (var i = 0; i < polylineCoordinates1.length - 1; i++) {
         totalDistance += calculateDistance(
-            listCoordinates[i].latitude,
-            listCoordinates[i].longitude,
-            listCoordinates[i + 1].latitude,
-            listCoordinates[i + 1].longitude);
+            polylineCoordinates1[i].latitude,
+            polylineCoordinates1[i].longitude,
+            polylineCoordinates1[i + 1].latitude,
+            polylineCoordinates1[i + 1].longitude);
       }
 
       setState(() {
-        markers.clear();
-        polylines.clear();
-
-        markers.add(startMarker);
-        markers.add(destinationMarker);
-
-        polylines.add(poly);
-
         placeDistance = totalDistance.toStringAsFixed(2);
         print('tot jarak $totalDistance.');
       });
@@ -179,8 +167,48 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
     }
   }
 
+  _createPolylines(
+      double startLatitude,
+      double startLongitude,
+      double destinationLatitude,
+      double destinationLongitude,
+      TravelMode travelMode) async {
+    polylinePoints = PolylinePoints();
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      Utils.API_KEY,
+      PointLatLng(startLatitude, startLongitude),
+      PointLatLng(destinationLatitude, destinationLongitude),
+      travelMode: travelMode,
+    );
+
+    if (result.points.isNotEmpty && travelMode == TravelMode.transit) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates1.add(
+          LatLng(
+            point.latitude,
+            point.longitude,
+          ),
+        );
+      });
+    }
+
+    print('polyline coor $polylineCoordinates1');
+
+    Polyline polyline1 = Polyline(
+      polylineId: PolylineId('poly-1'),
+      points: polylineCoordinates1,
+      width: 7,
+      color: Colors.blue,
+    );
+
+    polylines.add(polyline1);
+  }
+
   Future<void> _onMapCreated(GoogleMapController controller) async {
     setState(() {
+      if (markers.isNotEmpty) markers.clear();
+      if (polylines.isNotEmpty) polylines.clear();
+
       _getCurrentLocation();
       mapController = controller;
     });

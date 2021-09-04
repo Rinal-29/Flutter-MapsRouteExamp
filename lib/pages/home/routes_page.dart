@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:fmaps_route/entity/sports_location.dart';
+import 'package:fmaps_route/utils.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -29,7 +31,8 @@ class _RoutesPageState extends State<RoutesPage> {
   //untuk medapatkan posisi awal dan akhir
   String startAddress = '';
   String destinationAddress = '';
-  String placeDistance;
+  String placeDistance1;
+  String placeDistance2;
 
   //mendapatkan alamat user
   final startAddressController = TextEditingController();
@@ -37,6 +40,10 @@ class _RoutesPageState extends State<RoutesPage> {
 
   Set<Marker> markers = {};
   Set<Polyline> polylines = {};
+
+  List<LatLng> polylineCoordinates1 = [];
+  List<LatLng> polylineCoordinates2 = [];
+  PolylinePoints polylinePoints;
 
   final startAddressFocusNode = FocusNode();
   final desrinationAddressFocusNode = FocusNode();
@@ -153,58 +160,42 @@ class _RoutesPageState extends State<RoutesPage> {
           title: 'Destination $destinationCordinateString',
           snippet: destinationAddress,
         ),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+        icon:
+            BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueMagenta),
+        onTap: () {
+          print('tapped markers');
+          setState(() {
+            for (var i = 0; i < polylineCoordinates1.length; i++) {
+              Marker markerPoly1 = Marker(
+                markerId: MarkerId(i.toString()),
+                position: LatLng(polylineCoordinates1[i].latitude,
+                    polylineCoordinates1[i].longitude),
+                infoWindow: InfoWindow(
+                    title: i.toString(),
+                    snippet:
+                        '${polylineCoordinates1[i].latitude}, ${polylineCoordinates1[i].longitude}'),
+                icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueGreen,
+                ),
+              );
+
+              markers.add(markerPoly1);
+            }
+          });
+        },
       );
 
-      double miny = (startLatitude <= destinationLatitude)
-          ? startLatitude
-          : destinationLatitude;
-      double minx = (startLongtitude <= destinationLongtitude)
-          ? startLongtitude
-          : destinationLongtitude;
-      double maxy = (startLatitude <= destinationLatitude)
-          ? destinationLatitude
-          : startLatitude;
-      double maxx = (startLongtitude <= destinationLongtitude)
-          ? destinationLongtitude
-          : startLongtitude;
+      markers.add(startMarker);
+      markers.add(destinationMarker);
 
-      double southWestLatitude = miny;
-      double southWestLongitude = minx;
+      await _createPolylines(startLatitude, startLongtitude,
+          destinationLatitude, destinationLongtitude, TravelMode.transit);
 
-      double northEastLatitude = maxy;
-      double northEastLongitude = maxx;
+      await _createPolylines(startLatitude, startLongtitude,
+          destinationLatitude, destinationLongtitude, TravelMode.driving);
 
-      // Accommodate the two locations within the
-      // camera view of the map
-      mapController.animateCamera(
-        CameraUpdate.newLatLngBounds(
-          LatLngBounds(
-            northeast: LatLng(northEastLatitude, northEastLongitude),
-            southwest: LatLng(southWestLatitude, southWestLongitude),
-          ),
-          100.0,
-        ),
-      );
-
-      List<LatLng> listCordinate = [];
-      LatLng startCordinatePoly = LatLng(startLatitude, startLongtitude);
-      LatLng destinationCordinatePoly =
-          LatLng(destinationLatitude, destinationLongtitude);
-      listCordinate.add(startCordinatePoly);
-      listCordinate.add(destinationCordinatePoly);
-
-      print('list cordinates : ${listCordinate[0].latitude}');
-
-      Polyline plyline = Polyline(
-        polylineId: PolylineId('poly1'),
-        visible: true,
-        points: listCordinate,
-        width: 2,
-        color: Colors.blue,
-      );
-
-      double totalDistance = 0.0;
+      double totalDistance1 = 0.0;
+      double totalDistance2 = 0.0;
 
       double calculateDistance(lat1, lon1, lat2, lon2) {
         var p = 0.017453292519943295;
@@ -215,29 +206,90 @@ class _RoutesPageState extends State<RoutesPage> {
         return 12742 * asin(sqrt(a));
       }
 
-      for (var i = 0; i < listCordinate.length - 1; i++) {
-        totalDistance += calculateDistance(
-            listCordinate[i].latitude,
-            listCordinate[i].longitude,
-            listCordinate[i + 1].latitude,
-            listCordinate[i + 1].longitude);
+      for (var i = 0; i < polylineCoordinates1.length - 1; i++) {
+        totalDistance1 += calculateDistance(
+            polylineCoordinates1[i].latitude,
+            polylineCoordinates1[i].longitude,
+            polylineCoordinates1[i + 1].latitude,
+            polylineCoordinates1[i + 1].longitude);
       }
 
+      for (var i = 0; i < polylineCoordinates2.length - 1; i++) {
+        totalDistance2 += calculateDistance(
+            polylineCoordinates2[i].latitude,
+            polylineCoordinates2[i].longitude,
+            polylineCoordinates2[i + 1].latitude,
+            polylineCoordinates2[i + 1].longitude);
+      }
+
+      mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(startLatitude, startLongtitude),
+            zoom: 15,
+            tilt: 50,
+            bearing: 45,
+          ),
+        ),
+      );
+
       setState(() {
-        markers.clear();
-        polylines.clear();
+        placeDistance1 = totalDistance1.toStringAsFixed(2);
+        print('Distance $placeDistance1 km');
 
-        markers.add(startMarker);
-        markers.add(destinationMarker);
-
-        polylines.add(plyline);
-
-        placeDistance = totalDistance.toStringAsFixed(2);
-        print('Distance $placeDistance km');
+        placeDistance2 = totalDistance2.toStringAsFixed(2);
+        print('Distance $placeDistance2 km');
       });
     } catch (e) {
       print('error $e');
     }
+  }
+
+  _createPolylines(
+      double startLatitude,
+      double startLongitude,
+      double destinationLatitude,
+      double destinationLongitude,
+      TravelMode travelMode) async {
+    polylinePoints = PolylinePoints();
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+        Utils.API_KEY,
+        PointLatLng(startLatitude, startLongitude),
+        PointLatLng(destinationLatitude, destinationLongitude),
+        travelMode: travelMode);
+
+    if (result.points.isNotEmpty && travelMode == TravelMode.transit) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates1.add(LatLng(point.latitude, point.longitude));
+      });
+
+      print('polyline coordinates 1 ${polylineCoordinates1.length}');
+    }
+
+    if (result.points.isNotEmpty && travelMode == TravelMode.driving) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates2.add(LatLng(point.latitude, point.longitude));
+      });
+
+      print('polyline coordinates 2 ${polylineCoordinates2.length}');
+    }
+
+    Polyline polyline1 = Polyline(
+      polylineId: PolylineId('poly-1'),
+      color: Colors.blue,
+      points: polylineCoordinates1,
+      width: 7,
+    );
+
+    Polyline polyline2 = Polyline(
+      polylineId: PolylineId('poly-2'),
+      color: Colors.red,
+      points: polylineCoordinates2,
+      width: 7,
+    );
+
+    polylines.add(polyline1);
+    polylines.add(polyline2);
   }
 
   Widget _textField({
@@ -486,13 +538,29 @@ class _RoutesPageState extends State<RoutesPage> {
                 height: 10,
               ),
               Visibility(
-                visible: placeDistance == null ? false : true,
-                child: Text(
-                  'Jarak $placeDistance Km',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                visible: placeDistance1 == null ? false : true,
+                child: Column(
+                  children: [
+                    Text(
+                      'Jarak $placeDistance1 Km',
+                      style: TextStyle(
+                        color: Colors.blue.shade500,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(
+                      height: 3,
+                    ),
+                    Text(
+                      'Jarak $placeDistance2 Km',
+                      style: TextStyle(
+                        color: Colors.red.shade500,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(
@@ -518,6 +586,14 @@ class _RoutesPageState extends State<RoutesPage> {
                 onPressed: () async {
                   startAddressFocusNode.unfocus();
                   desrinationAddressFocusNode.unfocus();
+                  setState(() {
+                    if (markers.isNotEmpty) markers.clear();
+                    if (polylines.isNotEmpty) polylines.clear();
+                    if (polylineCoordinates1.isNotEmpty)
+                      polylineCoordinates1.clear();
+                    if (polylineCoordinates2.isNotEmpty)
+                      polylineCoordinates2.clear();
+                  });
                   await _calculateDistance();
                 },
               ),

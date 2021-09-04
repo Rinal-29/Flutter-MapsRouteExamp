@@ -96,7 +96,9 @@ class LocationCardTile extends StatelessWidget {
                     ),
                     SizedBox(width: 5),
                     OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/detail-location');
+                      },
                       child: Text(
                         'Detail Lokasi',
                         style: TextStyle(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fmaps_route/pages/home/home_page.dart';
+import 'package:fmaps_route/pages/home/locations_page.dart';
 import 'package:fmaps_route/pages/home/routes_page.dart';
 
 class MainPage extends StatefulWidget {
@@ -35,6 +36,12 @@ class _MainPageState extends State<MainPage> {
             ),
             label: 'Find Route',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(
+              Icons.list,
+            ),
+            label: 'List Location',
+          ),
         ],
       ),
     );
@@ -44,9 +51,10 @@ class _MainPageState extends State<MainPage> {
     switch (_currentIndex) {
       case 0:
         return HomePage();
-        break;
       case 1:
         return RoutesPage();
+      case 2:
+        return LocationsPage();
       default:
         return HomePage();
     }
