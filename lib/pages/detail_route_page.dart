@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:fmaps_route/entity/sports_location.dart';
+import 'package:fmaps_route/models/location_model.dart';
 import 'package:fmaps_route/utils.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -9,7 +9,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:math' show cos, sqrt, asin;
 
 class DetailRoutePage extends StatefulWidget {
-  final SportsLocation location;
+  final LocationModel location;
 
   DetailRoutePage({
     Key key,
@@ -123,7 +123,7 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
       );
 
       Marker destinationMarker = Marker(
-        markerId: MarkerId(sportLocation.id),
+        markerId: MarkerId(sportLocation.name),
         position: LatLng(destinationLatitude, destinationLongitude),
         infoWindow: InfoWindow(
           title: 'Destination ${sportLocation.name}',

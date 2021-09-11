@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:fmaps_route/entity/sports_location.dart';
+import 'package:fmaps_route/models/location_model.dart';
 import 'package:fmaps_route/pages/detail_route_page.dart';
 
 class LocationCardTile extends StatelessWidget {
-  final SportsLocation location;
+  final LocationModel location;
 
   LocationCardTile({
     Key key,
@@ -29,8 +29,8 @@ class LocationCardTile extends StatelessWidget {
               topLeft: Radius.circular(12),
               topRight: Radius.circular(12),
             ),
-            child: Image.asset(
-              location.image,
+            child: Image.network(
+              location.galleries[0].url,
               height: 110,
               width: 250,
               fit: BoxFit.cover,

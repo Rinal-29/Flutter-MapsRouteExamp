@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:fmaps_route/entity/sports_location.dart';
+import 'package:fmaps_route/providers/location_provider.dart';
 import 'package:fmaps_route/utils.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'dart:math' show cos, sqrt, asin;
+
+import 'package:provider/provider.dart';
 
 class RoutesPage extends StatefulWidget {
   const RoutesPage({Key key}) : super(key: key);
@@ -50,7 +53,7 @@ class _RoutesPageState extends State<RoutesPage> {
 
   List<SportsLocation> sportsLocation = [
     SportsLocation(
-      id: 'Unhas',
+      id: '1',
       address:
           'VF7P+7V6, Tamalanrea Indah, Kec. Tamalanrea, Kota Makassar, Sulawesi Selatan 90245',
       lat: -5.1354947,
@@ -58,7 +61,7 @@ class _RoutesPageState extends State<RoutesPage> {
       name: 'Lapangan olahraga unhas',
     ),
     SportsLocation(
-      id: 'Lapangan Tala',
+      id: '2',
       address:
           'VG66+PP2, Tamalanrea, Kec. Tamalanrea, Kota Makassar, Sulawesi Selatan 90245',
       lat: -5.1388747,
@@ -66,7 +69,7 @@ class _RoutesPageState extends State<RoutesPage> {
       name: 'Lapangan Tala',
     ),
     SportsLocation(
-      id: 'Gor Sudiang',
+      id: '3',
       address:
           'Jl. Pajjaiang No.73, Sudiang Raya, Kec. Biringkanaya, Kota Makassar, Sulawesi Selatan 90241',
       lat: -5.1059063,
@@ -76,6 +79,8 @@ class _RoutesPageState extends State<RoutesPage> {
   ];
 
   _getCurrentLocation() async {
+    await Provider.of<LocationsProvider>(context, listen: false).getLocations();
+
     await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
         .then((Position position) async {
       setState(() {
@@ -85,6 +90,11 @@ class _RoutesPageState extends State<RoutesPage> {
           print('Current Pos $_currentPosition');
         } catch (e) {
           print(e);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal Mendapatkan Lokasi pengguna'),
+            ),
+          );
         }
       });
       await _getAddress();
@@ -118,6 +128,11 @@ class _RoutesPageState extends State<RoutesPage> {
       });
     } catch (e) {
       print(e);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal Mendapatkan Lokasi pengguna'),
+        ),
+      );
     }
   }
 
@@ -171,9 +186,10 @@ class _RoutesPageState extends State<RoutesPage> {
                 position: LatLng(polylineCoordinates1[i].latitude,
                     polylineCoordinates1[i].longitude),
                 infoWindow: InfoWindow(
-                    title: i.toString(),
-                    snippet:
-                        '${polylineCoordinates1[i].latitude}, ${polylineCoordinates1[i].longitude}'),
+                  title: i.toString(),
+                  snippet:
+                      '${polylineCoordinates1[i].latitude}, ${polylineCoordinates1[i].longitude}',
+                ),
                 icon: BitmapDescriptor.defaultMarkerWithHue(
                   BitmapDescriptor.hueGreen,
                 ),
@@ -212,6 +228,8 @@ class _RoutesPageState extends State<RoutesPage> {
             polylineCoordinates1[i].longitude,
             polylineCoordinates1[i + 1].latitude,
             polylineCoordinates1[i + 1].longitude);
+
+        print('total distance1 - node $i  $totalDistance1');
       }
 
       for (var i = 0; i < polylineCoordinates2.length - 1; i++) {
@@ -242,6 +260,11 @@ class _RoutesPageState extends State<RoutesPage> {
       });
     } catch (e) {
       print('error $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal melakukan kalkulasi jarak'),
+        ),
+      );
     }
   }
 
@@ -336,6 +359,9 @@ class _RoutesPageState extends State<RoutesPage> {
   }
 
   Widget dropdownButton() {
+    LocationsProvider locationsProvider =
+        Provider.of<LocationsProvider>(context);
+
     return Container(
       width: MediaQuery.of(context).size.width * 0.8,
       child: DropdownButtonFormField(
@@ -362,10 +388,10 @@ class _RoutesPageState extends State<RoutesPage> {
           ),
         ),
         isExpanded: true,
-        items: sportsLocation.map((SportsLocation map) {
+        items: locationsProvider.locations.map((map) {
           return DropdownMenuItem(
             child: Text(
-              map.id,
+              map.name,
               overflow: TextOverflow.ellipsis,
             ),
             value: map.name,

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fmaps_route/components/location_card_tile.dart';
-import 'package:fmaps_route/entity/sports_location.dart';
+import 'package:fmaps_route/providers/location_provider.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key key}) : super(key: key);
@@ -21,41 +22,39 @@ class _HomePageState extends State<HomePage> {
 
   GoogleMapController mapController;
 
-  List<SportsLocation> sportsLocation = [
-    SportsLocation(
-        id: 'Lapangan Sepakbola Unhas',
-        address:
-            'Tamalanrea Indah, Kec. Tamalanrea, Kota Makassar, Sulawesi Selatan 90245',
-        lat: -5.1346612,
-        lng: 119.4857507,
-        name: 'Lapangan Sepakbola Unhas',
-        image: 'assets/lapangan_unhas.jpg'),
-    SportsLocation(
-      id: 'Lapangan Tala',
-      address:
-          'Tamalanrea, Kec. Tamalanrea, Kota Makassar, Sulawesi Selatan 90245',
-      lat: -5.1383742,
-      lng: 119.5095757,
-      name: 'Lapangan Tala',
-      image: 'assets/lapangan_tala.jpg',
-    ),
-    SportsLocation(
-      id: 'Gor Sudiang',
-      address:
-          'Jl. Pajjaiang No.73, Sudiang Raya, Kec. Biringkanaya, Kota Makassar, Sulawesi Selatan 90241',
-      lat: -5.1056186,
-      lng: 119.5266896,
-      name: 'Gor Sudiang',
-      image: 'assets/gor_sudiang.jpg',
-    ),
-  ];
+  Future<LatLng> _destinationLatLng(String destination) async {
+    double destinationLat;
+    double destinationLng;
+
+    try {
+      List<Location> destinationPlacemark =
+          await locationFromAddress(destination);
+
+      destinationLat = destinationPlacemark[0].latitude;
+      destinationLng = destinationPlacemark[0].longitude;
+    } catch (e) {
+      print('errors $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menampilkan data, coba lagi'),
+        ),
+      );
+    }
+
+    return LatLng(destinationLat, destinationLng);
+  }
 
   Future<void> _onMapcreated(GoogleMapController controller) async {
+    await Provider.of<LocationsProvider>(context, listen: false).getLocations();
+
+    LocationsProvider locationsProvider =
+        Provider.of<LocationsProvider>(context, listen: false);
+
     List<Marker> listMarkers = [];
 
-    for (final sport in sportsLocation) {
+    for (final sport in locationsProvider.locations) {
       Marker marker = Marker(
-        markerId: MarkerId(sport.id),
+        markerId: MarkerId(sport.name),
         position: await _destinationLatLng(sport.name),
         infoWindow: InfoWindow(
           title: sport.name,
@@ -75,16 +74,6 @@ class _HomePageState extends State<HomePage> {
 
       mapController = controller;
     });
-  }
-
-  Future<LatLng> _destinationLatLng(String destination) async {
-    List<Location> destinationPlacemark =
-        await locationFromAddress(destination);
-
-    double destinationLat = destinationPlacemark[0].latitude;
-    double destinationLng = destinationPlacemark[0].longitude;
-
-    return LatLng(destinationLat, destinationLng);
   }
 
   Widget header() {
@@ -169,6 +158,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget listLocations() {
+    LocationsProvider locationsProvider =
+        Provider.of<LocationsProvider>(context);
     return Align(
       alignment: Alignment.bottomLeft,
       child: Container(
@@ -179,25 +170,25 @@ class _HomePageState extends State<HomePage> {
         ),
         child: ListView(
           scrollDirection: Axis.horizontal,
-          children: [
-            for (var i = 0; i < sportsLocation.length; i++)
-              GestureDetector(
-                onTap: () async {
-                  mapController.animateCamera(
-                    CameraUpdate.newCameraPosition(
-                      CameraPosition(
-                        target:
-                            await _destinationLatLng(sportsLocation[i].name),
-                        zoom: 15,
-                        tilt: 50,
-                        bearing: 45,
+          children: locationsProvider.locations
+              .map(
+                (location) => GestureDetector(
+                  onTap: () async {
+                    mapController.animateCamera(
+                      CameraUpdate.newCameraPosition(
+                        CameraPosition(
+                          target: await _destinationLatLng(location.name),
+                          zoom: 15,
+                          tilt: 50,
+                          bearing: 45,
+                        ),
                       ),
-                    ),
-                  );
-                },
-                child: LocationCardTile(location: sportsLocation[i]),
-              ),
-          ],
+                    );
+                  },
+                  child: LocationCardTile(location: location),
+                ),
+              )
+              .toList(),
         ),
       ),
     );

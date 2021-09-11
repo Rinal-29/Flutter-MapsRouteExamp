@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fmaps_route/components/image._card_tile.dart';
 
 class DetailLocationPage extends StatelessWidget {
   const DetailLocationPage({Key key}) : super(key: key);
@@ -161,20 +162,7 @@ class DetailLocationPage extends StatelessWidget {
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
-                        Container(
-                          margin: EdgeInsets.only(
-                            right: 10,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              'assets/gor_sudiang.jpg',
-                              width: 140,
-                              height: 125,
-                              fit: BoxFit.fill,
-                            ),
-                          ),
-                        ),
+                        ImageCardTile(),
                         Container(
                           margin: EdgeInsets.only(
                             right: 10,
