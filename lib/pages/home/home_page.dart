@@ -45,8 +45,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _onMapcreated(GoogleMapController controller) async {
-    await Provider.of<LocationsProvider>(context, listen: false).getLocations();
-
     LocationsProvider locationsProvider =
         Provider.of<LocationsProvider>(context, listen: false);
 

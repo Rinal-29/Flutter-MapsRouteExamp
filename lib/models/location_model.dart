@@ -8,6 +8,7 @@ class LocationModel {
   String address;
   String description;
   String facility;
+  String openTime;
   List<GalleryModel> galleries;
 
   LocationModel({
@@ -18,6 +19,7 @@ class LocationModel {
     this.address,
     this.description,
     this.facility,
+    this.openTime,
     this.galleries,
   });
 
@@ -29,6 +31,7 @@ class LocationModel {
     address = json['address'];
     description = json['description'];
     facility = json['facility'];
+    openTime = json['open_time'];
     galleries = json['galleries']
         .map<GalleryModel>((gallery) => GalleryModel.fromJson(gallery))
         .toList();
@@ -43,6 +46,7 @@ class LocationModel {
       'address': address,
       'description': description,
       'facility': facility,
+      'open_time': openTime,
       'galleries': galleries.map((gallery) => gallery.toJson()).toList(),
     };
   }

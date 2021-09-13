@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:fmaps_route/models/location_model.dart';
 import 'package:fmaps_route/pages/detail_locatian_page.dart';
 
 class LocationItemCard extends StatelessWidget {
-  const LocationItemCard({Key key}) : super(key: key);
+  final LocationModel location;
+
+  LocationItemCard({
+    Key key,
+    this.location,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +17,9 @@ class LocationItemCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DetailLocationPage(),
+            builder: (context) => DetailLocationPage(
+              location: location,
+            ),
           ),
         );
       },
@@ -31,9 +39,11 @@ class LocationItemCard extends StatelessWidget {
           child: Row(
             children: [
               ClipRRect(
-                child: Image.asset(
-                  'assets/gor_sudiang.jpg',
+                child: Image.network(
+                  location.galleries[0].url,
                   height: 60,
+                  width: 60,
+                  fit: BoxFit.cover,
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -45,7 +55,7 @@ class LocationItemCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Gor Sudiang',
+                      location.name,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                       ),
@@ -54,7 +64,7 @@ class LocationItemCard extends StatelessWidget {
                       height: 8,
                     ),
                     Text(
-                      'Jl. Pajjaiang No.73, Sudiang Raya, Kec. Biringkanaya, Kota Makassar, Sulawesi Selatan 90241',
+                      location.address,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.black45,

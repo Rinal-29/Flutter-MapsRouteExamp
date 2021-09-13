@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:fmaps_route/components/image._card_tile.dart';
+import 'package:fmaps_route/models/location_model.dart';
 
 class DetailLocationPage extends StatelessWidget {
-  const DetailLocationPage({Key key}) : super(key: key);
+  final LocationModel location;
+
+  DetailLocationPage({
+    Key key,
+    this.location,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     Widget header() {
       return Stack(
         children: [
-          Image.asset(
-            'assets/gor_sudiang.jpg',
+          Image.network(
+            location.galleries[0].url,
             width: MediaQuery.of(context).size.width,
             height: 350,
             fit: BoxFit.cover,
@@ -54,7 +60,7 @@ class DetailLocationPage extends StatelessWidget {
       return Container(
         width: double.infinity,
         margin: EdgeInsets.only(
-          top: MediaQuery.of(context).size.height * 0.5,
+          top: MediaQuery.of(context).size.height * 0.4,
         ),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -75,7 +81,7 @@ class DetailLocationPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Gor Sudiang',
+                    location.name,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -85,7 +91,7 @@ class DetailLocationPage extends StatelessWidget {
                   SizedBox(
                     height: 5,
                   ),
-                  Text('Buka 06.00 - 18.00'),
+                  Text('Buka ${location.openTime} WITA'),
                   SizedBox(
                     height: 35,
                   ),
@@ -101,7 +107,7 @@ class DetailLocationPage extends StatelessWidget {
                     height: 5,
                   ),
                   Text(
-                    'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+                    location.description,
                     textAlign: TextAlign.justify,
                   ),
                   SizedBox(
@@ -119,7 +125,7 @@ class DetailLocationPage extends StatelessWidget {
                     height: 5,
                   ),
                   Text(
-                    'Jl. Pajjaiang No.73, Sudiang Raya, Kec. Biringkanaya, Kota Makassar, Sulawesi Selatan 90241',
+                    location.address,
                     textAlign: TextAlign.justify,
                   ),
                   SizedBox(
@@ -137,7 +143,7 @@ class DetailLocationPage extends StatelessWidget {
                     height: 5,
                   ),
                   Text(
-                    'Lapangan olahraga dalam ruangan, Joging, Bersepeda, Senam',
+                    location.facility,
                     textAlign: TextAlign.justify,
                   ),
                   SizedBox(
@@ -161,37 +167,13 @@ class DetailLocationPage extends StatelessWidget {
                     ),
                     child: ListView(
                       scrollDirection: Axis.horizontal,
-                      children: [
-                        ImageCardTile(),
-                        Container(
-                          margin: EdgeInsets.only(
-                            right: 10,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              'assets/lapangan_tala.jpg',
-                              width: 140,
-                              height: 125,
-                              fit: BoxFit.fill,
+                      children: location.galleries
+                          .map(
+                            (gallery) => ImageCardTile(
+                              gallery: gallery,
                             ),
-                          ),
-                        ),
-                        Container(
-                          margin: EdgeInsets.only(
-                            right: 10,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              'assets/lapangan_unhas.jpg',
-                              width: 140,
-                              height: 125,
-                              fit: BoxFit.fill,
-                            ),
-                          ),
-                        ),
-                      ],
+                          )
+                          .toList(),
                     ),
                   )
                 ],

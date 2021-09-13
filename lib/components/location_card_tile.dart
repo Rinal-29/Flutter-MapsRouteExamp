@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fmaps_route/models/location_model.dart';
+import 'package:fmaps_route/pages/detail_locatian_page.dart';
 import 'package:fmaps_route/pages/detail_route_page.dart';
 
 class LocationCardTile extends StatelessWidget {
@@ -51,6 +52,7 @@ class LocationCardTile extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                     fontSize: 16,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 7),
                 Text(
@@ -62,7 +64,7 @@ class LocationCardTile extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 Text(
-                  'Buka 06.00 - 18.00 WITA',
+                  'Buka ${location.openTime} WITA',
                   style: TextStyle(
                     color: Colors.black38,
                   ),
@@ -96,8 +98,15 @@ class LocationCardTile extends StatelessWidget {
                     ),
                     SizedBox(width: 5),
                     OutlinedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/detail-location');
+                      onPressed: () async {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DetailLocationPage(
+                              location: location,
+                            ),
+                          ),
+                        );
                       },
                       child: Text(
                         'Detail Lokasi',

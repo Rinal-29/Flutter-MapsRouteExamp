@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:fmaps_route/models/gallery_model.dart';
 
 class ImageCardTile extends StatelessWidget {
-  const ImageCardTile({Key key}) : super(key: key);
+  final GalleryModel gallery;
+
+  ImageCardTile({Key key, this.gallery}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -11,8 +14,8 @@ class ImageCardTile extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: Image.asset(
-          'assets/gor_sudiang.jpg',
+        child: Image.network(
+          gallery.url,
           width: 140,
           height: 125,
           fit: BoxFit.fill,

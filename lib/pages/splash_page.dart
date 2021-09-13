@@ -16,16 +16,49 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   getInit() async {
-    await Provider.of<LocationsProvider>(context, listen: false).getLocations();
+    try {
+      await Provider.of<LocationsProvider>(context, listen: false)
+          .getLocations();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menampilkan data, periksa jaringan'),
+        ),
+      );
+    }
     Navigator.pushNamed(context, '/main-page');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color(0xffF8FAFD),
       body: Center(
-        child: Text('Splash'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 130,
+              height: 150,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/fmaps_logo_apps.png'),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 10,
+            ),
+            Text(
+              'Aplikasi Pemetaan Sarana Olahraga',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

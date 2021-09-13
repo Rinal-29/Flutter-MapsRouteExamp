@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:fmaps_route/entity/sports_location.dart';
 import 'package:fmaps_route/providers/location_provider.dart';
 import 'package:fmaps_route/utils.dart';
 import 'package:geocoding/geocoding.dart';
@@ -51,36 +50,7 @@ class _RoutesPageState extends State<RoutesPage> {
   final startAddressFocusNode = FocusNode();
   final desrinationAddressFocusNode = FocusNode();
 
-  List<SportsLocation> sportsLocation = [
-    SportsLocation(
-      id: '1',
-      address:
-          'VF7P+7V6, Tamalanrea Indah, Kec. Tamalanrea, Kota Makassar, Sulawesi Selatan 90245',
-      lat: -5.1354947,
-      lng: 119.4859224,
-      name: 'Lapangan olahraga unhas',
-    ),
-    SportsLocation(
-      id: '2',
-      address:
-          'VG66+PP2, Tamalanrea, Kec. Tamalanrea, Kota Makassar, Sulawesi Selatan 90245',
-      lat: -5.1388747,
-      lng: 119.5103926,
-      name: 'Lapangan Tala',
-    ),
-    SportsLocation(
-      id: '3',
-      address:
-          'Jl. Pajjaiang No.73, Sudiang Raya, Kec. Biringkanaya, Kota Makassar, Sulawesi Selatan 90241',
-      lat: -5.1059063,
-      lng: 119.5245166,
-      name: 'Gor Sudiang',
-    )
-  ];
-
   _getCurrentLocation() async {
-    await Provider.of<LocationsProvider>(context, listen: false).getLocations();
-
     await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
         .then((Position position) async {
       setState(() {
@@ -139,6 +109,7 @@ class _RoutesPageState extends State<RoutesPage> {
   _calculateDistance() async {
     try {
       print('start address distance $startAddress');
+      print('destination $destinationAddress');
       List<Location> startPlacemark = await locationFromAddress(startAddress);
       List<Location> destinationPlacemark =
           await locationFromAddress(destinationAddress);
@@ -401,7 +372,6 @@ class _RoutesPageState extends State<RoutesPage> {
           setState(() {
             print('value $value');
             destinationAddress = value;
-            print('destination $destinationAddress');
           });
         },
       ),

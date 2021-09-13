@@ -137,7 +137,7 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
       markers.add(destinationMarker);
 
       await _createPolylines(startLatitude, startLongitude, destinationLatitude,
-          destinationLongitude, TravelMode.transit);
+          destinationLongitude, TravelMode.driving);
 
       double totalDistance = 0.0;
 
@@ -164,6 +164,11 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
       });
     } catch (e) {
       print('errors $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menampilkan data, coba lagi'),
+        ),
+      );
     }
   }
 
@@ -181,16 +186,14 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
       travelMode: travelMode,
     );
 
-    if (result.points.isNotEmpty && travelMode == TravelMode.transit) {
-      result.points.forEach((PointLatLng point) {
-        polylineCoordinates1.add(
-          LatLng(
-            point.latitude,
-            point.longitude,
-          ),
-        );
-      });
-    }
+    result.points.forEach((PointLatLng point) {
+      polylineCoordinates1.add(
+        LatLng(
+          point.latitude,
+          point.longitude,
+        ),
+      );
+    });
 
     print('polyline coor $polylineCoordinates1');
 
