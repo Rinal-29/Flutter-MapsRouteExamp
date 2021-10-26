@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fmaps_route/providers/graph_provider.dart';
 import 'package:fmaps_route/providers/location_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +20,9 @@ class _SplashPageState extends State<SplashPage> {
     try {
       await Provider.of<LocationsProvider>(context, listen: false)
           .getLocations();
+
+      await Provider.of<GraphProvider>(context, listen: false)
+          .getLocationsManually();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

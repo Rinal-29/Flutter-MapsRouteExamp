@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:fmaps_route/models/location_model.dart';
 import 'package:fmaps_route/providers/location_provider.dart';
 import 'package:fmaps_route/utils.dart';
 import 'package:geocoding/geocoding.dart';
@@ -49,6 +50,9 @@ class _RoutesPageState extends State<RoutesPage> {
 
   final startAddressFocusNode = FocusNode();
   final desrinationAddressFocusNode = FocusNode();
+
+  List<String> sportsLocations = [];
+  List<LocationModel> locations = [];
 
   _getCurrentLocation() async {
     await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
@@ -129,6 +133,7 @@ class _RoutesPageState extends State<RoutesPage> {
 
       print('current pos $startCoordinateString');
 
+      // menampilkan titik awal pengguna
       Marker startMarker = Marker(
         markerId: MarkerId(startCoordinateString),
         position: LatLng(startLatitude, startLongtitude),
@@ -139,6 +144,7 @@ class _RoutesPageState extends State<RoutesPage> {
         icon: BitmapDescriptor.defaultMarker,
       );
 
+      // menampilkan titik lokasi tujuan pengguna
       Marker destinationMarker = Marker(
         markerId: MarkerId(destinationCordinateString),
         position: LatLng(destinationLatitude, destinationLongtitude),
@@ -150,25 +156,6 @@ class _RoutesPageState extends State<RoutesPage> {
             BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueMagenta),
         onTap: () {
           print('tapped markers');
-          setState(() {
-            for (var i = 0; i < polylineCoordinates1.length; i++) {
-              Marker markerPoly1 = Marker(
-                markerId: MarkerId(i.toString()),
-                position: LatLng(polylineCoordinates1[i].latitude,
-                    polylineCoordinates1[i].longitude),
-                infoWindow: InfoWindow(
-                  title: i.toString(),
-                  snippet:
-                      '${polylineCoordinates1[i].latitude}, ${polylineCoordinates1[i].longitude}',
-                ),
-                icon: BitmapDescriptor.defaultMarkerWithHue(
-                  BitmapDescriptor.hueGreen,
-                ),
-              );
-
-              markers.add(markerPoly1);
-            }
-          });
         },
       );
 
@@ -181,9 +168,6 @@ class _RoutesPageState extends State<RoutesPage> {
       await _createPolylines(startLatitude, startLongtitude,
           destinationLatitude, destinationLongtitude, TravelMode.driving);
 
-      double totalDistance1 = 0.0;
-      double totalDistance2 = 0.0;
-
       double calculateDistance(lat1, lon1, lat2, lon2) {
         var p = 0.017453292519943295;
         var c = cos;
@@ -193,6 +177,10 @@ class _RoutesPageState extends State<RoutesPage> {
         return 12742 * asin(sqrt(a));
       }
 
+      double totalDistance1 = 0.0;
+      double totalDistance2 = 0.0;
+
+      // melakukan perulangan untuk menghitung jarak rute
       for (var i = 0; i < polylineCoordinates1.length - 1; i++) {
         totalDistance1 += calculateDistance(
             polylineCoordinates1[i].latitude,
@@ -203,6 +191,7 @@ class _RoutesPageState extends State<RoutesPage> {
         print('total distance1 - node $i  $totalDistance1');
       }
 
+      // melakukan perulangan untuk menghitung jarak rute
       for (var i = 0; i < polylineCoordinates2.length - 1; i++) {
         totalDistance2 += calculateDistance(
             polylineCoordinates2[i].latitude,
@@ -211,6 +200,7 @@ class _RoutesPageState extends State<RoutesPage> {
             polylineCoordinates2[i + 1].longitude);
       }
 
+      // mengatur posisi kamera pada maps
       mapController.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
@@ -222,6 +212,8 @@ class _RoutesPageState extends State<RoutesPage> {
         ),
       );
 
+      // menampilkan jarak untuk melakukan perbandingan
+      // jarak terpendek
       setState(() {
         placeDistance1 = totalDistance1.toStringAsFixed(2);
         print('Distance $placeDistance1 km');
@@ -252,6 +244,7 @@ class _RoutesPageState extends State<RoutesPage> {
         PointLatLng(destinationLatitude, destinationLongitude),
         travelMode: travelMode);
 
+    // melakukan perulangan untuk pencarian jalur
     if (result.points.isNotEmpty && travelMode == TravelMode.transit) {
       result.points.forEach((PointLatLng point) {
         polylineCoordinates1.add(LatLng(point.latitude, point.longitude));
@@ -260,6 +253,7 @@ class _RoutesPageState extends State<RoutesPage> {
       print('polyline coordinates 1 ${polylineCoordinates1.length}');
     }
 
+    // melakukan perulangan untuk pencarian jalur
     if (result.points.isNotEmpty && travelMode == TravelMode.driving) {
       result.points.forEach((PointLatLng point) {
         polylineCoordinates2.add(LatLng(point.latitude, point.longitude));
@@ -268,6 +262,7 @@ class _RoutesPageState extends State<RoutesPage> {
       print('polyline coordinates 2 ${polylineCoordinates2.length}');
     }
 
+    // menggmabarkan jalur pada maps
     Polyline polyline1 = Polyline(
       polylineId: PolylineId('poly-1'),
       color: Colors.blue,
@@ -275,6 +270,7 @@ class _RoutesPageState extends State<RoutesPage> {
       width: 7,
     );
 
+    // menggambarkan jalur pada maps
     Polyline polyline2 = Polyline(
       polylineId: PolylineId('poly-2'),
       color: Colors.red,
@@ -284,6 +280,22 @@ class _RoutesPageState extends State<RoutesPage> {
 
     polylines.add(polyline1);
     polylines.add(polyline2);
+  }
+
+  _onSearchTextChanged(String text) async {
+    sportsLocations.clear();
+    if (text.isEmpty) {
+      setState(() {});
+      return;
+    }
+
+    locations.forEach((locationData) {
+      if (locationData.name.toLowerCase().contains(text.toLowerCase())) {
+        sportsLocations.add(locationData.name);
+      }
+    });
+
+    setState(() {});
   }
 
   Widget _textField({
@@ -378,6 +390,89 @@ class _RoutesPageState extends State<RoutesPage> {
     );
   }
 
+  Widget seacrhBar() {
+    LocationsProvider locationsProvider =
+        Provider.of<LocationsProvider>(context);
+    locations = locationsProvider.locations;
+
+    return Column(
+      children: [
+        Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          child: Card(
+            child: ListTile(
+              leading: Icon(Icons.search),
+              title: TextField(
+                controller: destinationAddressController,
+                decoration: InputDecoration(
+                  hintText: 'Search Location',
+                  border: InputBorder.none,
+                ),
+                onChanged: _onSearchTextChanged,
+              ),
+              trailing: IconButton(
+                icon: Icon(Icons.cancel),
+                onPressed: () {
+                  destinationAddressController.clear();
+                  destinationAddress = '';
+                  placeDistance1 = null;
+                  _onSearchTextChanged('');
+                },
+              ),
+            ),
+          ),
+        ),
+        Visibility(
+          visible: destinationAddress == '' ? true : false,
+          child: Container(
+            height: 110,
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: sportsLocations.length != 0 ||
+                    destinationAddressController.text.isNotEmpty
+                ? Scrollbar(
+                    child: ListView.builder(
+                      itemCount: sportsLocations.length,
+                      itemBuilder: (context, i) {
+                        return Container(
+                          margin: EdgeInsets.symmetric(vertical: 10),
+                          alignment: Alignment.center,
+                          child: GestureDetector(
+                            child: Text(sportsLocations[i]),
+                            onTap: () {
+                              destinationAddress = sportsLocations[i];
+                              destinationAddressController.text =
+                                  sportsLocations[i];
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                : Scrollbar(
+                    child: ListView.builder(
+                      itemCount: locations.length,
+                      itemBuilder: (context, i) {
+                        return Container(
+                          margin: EdgeInsets.symmetric(vertical: 10),
+                          alignment: Alignment.center,
+                          child: GestureDetector(
+                            child: Text(locations[i].name),
+                            onTap: () {
+                              destinationAddress = locations[i].name;
+                              destinationAddressController.text =
+                                  locations[i].name;
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget mapView() {
     return GoogleMap(
       initialCameraPosition: _initialLocation,
@@ -441,10 +536,10 @@ class _RoutesPageState extends State<RoutesPage> {
       child: Container(
         margin: EdgeInsets.only(
           left: 10,
-          top: 75,
+          bottom: 30,
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             ClipOval(
               child: Material(
@@ -491,109 +586,111 @@ class _RoutesPageState extends State<RoutesPage> {
     return SafeArea(
       child: Align(
         alignment: Alignment.topCenter,
-        child: Container(
-          margin: EdgeInsets.only(top: 10),
-          decoration: BoxDecoration(
-              color: Colors.white70, borderRadius: BorderRadius.circular(12)),
-          width: MediaQuery.of(context).size.width * 0.9,
-          padding: EdgeInsets.symmetric(
-            vertical: 10,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Places',
-                style: TextStyle(
-                  fontSize: 20,
-                ),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              _textField(
-                label: 'Start',
-                hint: 'Start point',
-                width: MediaQuery.of(context).size.width,
-                prefixIcon: Icon(Icons.looks_one),
-                suffixIcon: Icon(Icons.my_location),
-                controller: startAddressController,
-                focusNode: startAddressFocusNode,
-                locationCallback: (String value) {
-                  startAddress = value;
-                },
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              SizedBox(
-                height: 5,
-              ),
-              dropdownButton(),
-              SizedBox(
-                height: 10,
-              ),
-              Visibility(
-                visible: placeDistance1 == null ? false : true,
-                child: Column(
-                  children: [
-                    Text(
-                      'Jarak $placeDistance1 Km',
-                      style: TextStyle(
-                        color: Colors.blue.shade500,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 3,
-                    ),
-                    Text(
-                      'Jarak $placeDistance2 Km',
-                      style: TextStyle(
-                        color: Colors.red.shade500,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 5,
-              ),
-              ElevatedButton(
-                child: Padding(
-                  padding: EdgeInsets.all(8),
-                  child: Text(
-                    'Show Route',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                    ),
+        child: SingleChildScrollView(
+          child: Container(
+            margin: EdgeInsets.only(top: 10),
+            decoration: BoxDecoration(
+                color: Colors.white70, borderRadius: BorderRadius.circular(12)),
+            width: MediaQuery.of(context).size.width * 0.9,
+            padding: EdgeInsets.symmetric(
+              vertical: 10,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Places',
+                  style: TextStyle(
+                    fontSize: 20,
                   ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.red,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                SizedBox(
+                  height: 10,
+                ),
+                _textField(
+                  label: 'Start',
+                  hint: 'Start point',
+                  width: MediaQuery.of(context).size.width,
+                  prefixIcon: Icon(Icons.looks_one),
+                  suffixIcon: Icon(Icons.my_location),
+                  controller: startAddressController,
+                  focusNode: startAddressFocusNode,
+                  locationCallback: (String value) {
+                    startAddress = value;
+                  },
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                SizedBox(
+                  height: 5,
+                ),
+                seacrhBar(),
+                SizedBox(
+                  height: 10,
+                ),
+                Visibility(
+                  visible: placeDistance1 == null ? false : true,
+                  child: Column(
+                    children: [
+                      Text(
+                        'Jarak $placeDistance1 Km',
+                        style: TextStyle(
+                          color: Colors.blue.shade500,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 3,
+                      ),
+                      Text(
+                        'Jarak $placeDistance2 Km',
+                        style: TextStyle(
+                          color: Colors.red.shade500,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                onPressed: () async {
-                  startAddressFocusNode.unfocus();
-                  desrinationAddressFocusNode.unfocus();
-                  setState(() {
-                    if (markers.isNotEmpty) markers.clear();
-                    if (polylines.isNotEmpty) polylines.clear();
-                    if (polylineCoordinates1.isNotEmpty)
-                      polylineCoordinates1.clear();
-                    if (polylineCoordinates2.isNotEmpty)
-                      polylineCoordinates2.clear();
-                  });
-                  await _calculateDistance();
-                },
-              ),
-            ],
+                SizedBox(
+                  height: 5,
+                ),
+                ElevatedButton(
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text(
+                      'Show Route',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    primary: Colors.red,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () async {
+                    startAddressFocusNode.unfocus();
+                    desrinationAddressFocusNode.unfocus();
+                    setState(() {
+                      if (markers.isNotEmpty) markers.clear();
+                      if (polylines.isNotEmpty) polylines.clear();
+                      if (polylineCoordinates1.isNotEmpty)
+                        polylineCoordinates1.clear();
+                      if (polylineCoordinates2.isNotEmpty)
+                        polylineCoordinates2.clear();
+                    });
+                    await _calculateDistance();
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

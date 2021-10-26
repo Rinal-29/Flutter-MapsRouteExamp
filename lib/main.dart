@@ -3,6 +3,7 @@ import 'package:fmaps_route/pages/detail_locatian_page.dart';
 import 'package:fmaps_route/pages/detail_route_page.dart';
 import 'package:fmaps_route/pages/home/main_page.dart';
 import 'package:fmaps_route/pages/splash_page.dart';
+import 'package:fmaps_route/providers/graph_provider.dart';
 import 'package:fmaps_route/providers/location_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +18,9 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (context) => LocationsProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => GraphProvider(),
         ),
       ],
       child: MaterialApp(

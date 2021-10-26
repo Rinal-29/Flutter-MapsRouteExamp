@@ -38,10 +38,12 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
   Set<Polyline> polylines = {};
 
   List<LatLng> polylineCoordinates1 = [];
+  List<LatLng> polylineCoordinates2 = [];
 
   PolylinePoints polylinePoints;
 
-  String placeDistance;
+  String placeDistance1;
+  String placeDistance2;
 
   _getCurrentLocation() async {
     await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
@@ -139,7 +141,11 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
       await _createPolylines(startLatitude, startLongitude, destinationLatitude,
           destinationLongitude, TravelMode.driving);
 
-      double totalDistance = 0.0;
+      await _createPolylines(startLatitude, startLongitude, destinationLatitude,
+          destinationLongitude, TravelMode.transit);
+
+      double totalDistance1 = 0.0;
+      double totalDistance2 = 0.0;
 
       double calculateDistance(lat1, lon1, lat2, lon2) {
         var p = 0.017453292519943295;
@@ -151,16 +157,27 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
       }
 
       for (var i = 0; i < polylineCoordinates1.length - 1; i++) {
-        totalDistance += calculateDistance(
+        totalDistance1 += calculateDistance(
             polylineCoordinates1[i].latitude,
             polylineCoordinates1[i].longitude,
             polylineCoordinates1[i + 1].latitude,
             polylineCoordinates1[i + 1].longitude);
       }
 
+      for (var i = 0; i < polylineCoordinates2.length - 1; i++) {
+        totalDistance2 += calculateDistance(
+            polylineCoordinates2[i].latitude,
+            polylineCoordinates2[i].longitude,
+            polylineCoordinates2[i + 1].latitude,
+            polylineCoordinates2[i + 1].longitude);
+      }
+
       setState(() {
-        placeDistance = totalDistance.toStringAsFixed(2);
-        print('tot jarak $totalDistance.');
+        placeDistance1 = totalDistance1.toStringAsFixed(2);
+        print('tot jarak $totalDistance1.');
+
+        placeDistance2 = totalDistance2.toStringAsFixed(2);
+        print('tot jarak $totalDistance1.');
       });
     } catch (e) {
       print('errors $e');
@@ -186,25 +203,38 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
       travelMode: travelMode,
     );
 
-    result.points.forEach((PointLatLng point) {
-      polylineCoordinates1.add(
-        LatLng(
-          point.latitude,
-          point.longitude,
-        ),
-      );
-    });
+    if (result.points.isNotEmpty && travelMode == TravelMode.transit) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates1.add(LatLng(point.latitude, point.longitude));
+      });
 
-    print('polyline coor $polylineCoordinates1');
+      print('polyline coordinates 1 ${polylineCoordinates1.length}');
+    }
+
+    if (result.points.isNotEmpty && travelMode == TravelMode.driving) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates2.add(LatLng(point.latitude, point.longitude));
+      });
+
+      print('polyline coordinates 2 ${polylineCoordinates2.length}');
+    }
 
     Polyline polyline1 = Polyline(
       polylineId: PolylineId('poly-1'),
+      color: Colors.blue,
       points: polylineCoordinates1,
       width: 7,
-      color: Colors.blue,
+    );
+
+    Polyline polyline2 = Polyline(
+      polylineId: PolylineId('poly-2'),
+      color: Colors.red,
+      points: polylineCoordinates2,
+      width: 7,
     );
 
     polylines.add(polyline1);
+    polylines.add(polyline2);
   }
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
@@ -253,23 +283,60 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
       child: Align(
         alignment: Alignment.topCenter,
         child: Container(
-          decoration: BoxDecoration(
-            color: Colors.yellow.shade400,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 10,
-              horizontal: 20,
-            ),
-            child: Text(
-              'Jarak $placeDistance Km',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: Colors.black87,
+          width: double.infinity,
+          child: Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade400,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 20,
+                      ),
+                      child: Text(
+                        'Jarak $placeDistance1 Km',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade400,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 20,
+                      ),
+                      child: Text(
+                        'Jarak $placeDistance2 Km',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -287,7 +354,7 @@ class _DetailRoutePageState extends State<DetailRoutePage> {
             body: Stack(
               children: [
                 mapView(),
-                placeDistance == null ? SizedBox() : distanceView(),
+                placeDistance1 == null ? SizedBox() : distanceView(),
               ],
             ),
           ),

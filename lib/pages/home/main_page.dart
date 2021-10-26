@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fmaps_route/pages/home/home_page.dart';
 import 'package:fmaps_route/pages/home/locations_page.dart';
 import 'package:fmaps_route/pages/home/routes_page.dart';
+import 'package:fmaps_route/pages/home/graph_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key key}) : super(key: key);
@@ -26,9 +27,9 @@ class _MainPageState extends State<MainPage> {
         items: [
           BottomNavigationBarItem(
             icon: Icon(
-              Icons.place,
+              Icons.list,
             ),
-            label: 'Sport Locations',
+            label: 'List',
           ),
           BottomNavigationBarItem(
             icon: Icon(
@@ -37,10 +38,14 @@ class _MainPageState extends State<MainPage> {
             label: 'Find Route',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.graphic_eq),
+            label: 'Graph',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(
-              Icons.list,
+              Icons.place,
             ),
-            label: 'List Location',
+            label: 'Maps',
           ),
         ],
       ),
@@ -50,13 +55,15 @@ class _MainPageState extends State<MainPage> {
   Widget body() {
     switch (_currentIndex) {
       case 0:
-        return HomePage();
+        return LocationsPage();
       case 1:
         return RoutesPage();
       case 2:
-        return LocationsPage();
-      default:
+        return GraphPage();
+      case 3:
         return HomePage();
+      default:
+        return LocationsPage();
     }
   }
 

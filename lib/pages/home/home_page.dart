@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fmaps_route/components/location_card_tile.dart';
+import 'package:fmaps_route/models/category_model.dart';
+import 'package:fmaps_route/models/location_model.dart';
 import 'package:fmaps_route/providers/location_provider.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -20,7 +22,22 @@ class _HomePageState extends State<HomePage> {
 
   Set<Marker> _markers = {};
 
+  List<Marker> listMarkers = [];
+  List<Marker> listAllMarkers = [];
+
   GoogleMapController mapController;
+
+  List<CategoryModel> _categories = [
+    CategoryModel("Joging", Colors.blue, false),
+    CategoryModel("Futsal", Colors.blue, false),
+    CategoryModel("Badminton", Colors.blue, false),
+    CategoryModel("Senam", Colors.blue, false),
+    CategoryModel("Sepakbola", Colors.blue, false),
+    CategoryModel("Bersepeda", Colors.blue, false),
+    CategoryModel("Basket", Colors.blue, false),
+  ];
+
+  List<LocationModel> locationFromCategory = [];
 
   Future<LatLng> _destinationLatLng(String destination) async {
     double destinationLat;
@@ -48,9 +65,33 @@ class _HomePageState extends State<HomePage> {
     LocationsProvider locationsProvider =
         Provider.of<LocationsProvider>(context, listen: false);
 
-    List<Marker> listMarkers = [];
+    if (locationFromCategory.isEmpty || locationFromCategory.length <= 0) {
+      for (final sport in locationsProvider.locations) {
+        Marker marker = Marker(
+          markerId: MarkerId(sport.name),
+          position: await _destinationLatLng(sport.name),
+          infoWindow: InfoWindow(
+            title: sport.name,
+            snippet: sport.address,
+          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueMagenta,
+          ),
+        );
+        listAllMarkers.add(marker);
+      }
+    }
 
-    for (final sport in locationsProvider.locations) {
+    setState(() {
+      _markers.clear();
+      _markers.addAll(listAllMarkers);
+
+      mapController = controller;
+    });
+  }
+
+  _drawMarkers() async {
+    for (final sport in locationFromCategory) {
       Marker marker = Marker(
         markerId: MarkerId(sport.name),
         position: await _destinationLatLng(sport.name),
@@ -62,16 +103,68 @@ class _HomePageState extends State<HomePage> {
           BitmapDescriptor.hueMagenta,
         ),
       );
-
       listMarkers.add(marker);
     }
 
     setState(() {
       _markers.clear();
       _markers.addAll(listMarkers);
-
-      mapController = controller;
     });
+  }
+
+  Widget categories() {
+    LocationsProvider locationsProvider =
+        Provider.of<LocationsProvider>(context, listen: false);
+
+    return Container(
+      margin: EdgeInsets.only(
+        top: 70,
+        left: 20,
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: _categories
+              .map(
+                (category) => Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 5),
+                  child: FilterChip(
+                    label: Text(category.name),
+                    labelStyle: TextStyle(color: Colors.white),
+                    backgroundColor: category.color,
+                    selected: category.isSelected,
+                    onSelected: (bool val) {
+                      setState(() {
+                        category.isSelected = val;
+
+                        if (category.isSelected) {
+                          locationFromCategory.clear();
+                          listMarkers.clear();
+
+                          locationsProvider.locations.forEach((location) {
+                            if (location.facility
+                                .toLowerCase()
+                                .contains(category.name.toLowerCase())) {
+                              locationFromCategory.add(location);
+                            }
+                          });
+
+                          _drawMarkers();
+                        } else {
+                          locationFromCategory.clear();
+                          print(locationFromCategory.length);
+                          _markers.clear();
+                          _markers.addAll(listAllMarkers);
+                        }
+                      });
+                    },
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
   }
 
   Widget header() {
@@ -86,6 +179,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       elevation: 0,
+      automaticallyImplyLeading: false,
     );
   }
 
@@ -168,25 +262,46 @@ class _HomePageState extends State<HomePage> {
         ),
         child: ListView(
           scrollDirection: Axis.horizontal,
-          children: locationsProvider.locations
-              .map(
-                (location) => GestureDetector(
-                  onTap: () async {
-                    mapController.animateCamera(
-                      CameraUpdate.newCameraPosition(
-                        CameraPosition(
-                          target: await _destinationLatLng(location.name),
-                          zoom: 15,
-                          tilt: 50,
-                          bearing: 45,
-                        ),
-                      ),
-                    );
-                  },
-                  child: LocationCardTile(location: location),
-                ),
-              )
-              .toList(),
+          children: locationFromCategory.isEmpty ||
+                  locationFromCategory.length < 0
+              ? locationsProvider.locations
+                  .map(
+                    (location) => GestureDetector(
+                      onTap: () async {
+                        mapController.animateCamera(
+                          CameraUpdate.newCameraPosition(
+                            CameraPosition(
+                              target: await _destinationLatLng(location.name),
+                              zoom: 15,
+                              tilt: 50,
+                              bearing: 45,
+                            ),
+                          ),
+                        );
+                      },
+                      child: LocationCardTile(location: location),
+                    ),
+                  )
+                  .toList()
+              : locationFromCategory
+                  .map(
+                    (location) => GestureDetector(
+                      onTap: () async {
+                        mapController.animateCamera(
+                          CameraUpdate.newCameraPosition(
+                            CameraPosition(
+                              target: await _destinationLatLng(location.name),
+                              zoom: 15,
+                              tilt: 50,
+                              bearing: 45,
+                            ),
+                          ),
+                        );
+                      },
+                      child: LocationCardTile(location: location),
+                    ),
+                  )
+                  .toList(),
         ),
       ),
     );
@@ -203,6 +318,7 @@ class _HomePageState extends State<HomePage> {
             body: Stack(
               children: [
                 mapWiew(),
+                categories(),
                 zoomButton(),
                 listLocations(),
               ],
